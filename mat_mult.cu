@@ -3,13 +3,12 @@
 #include "ca_common.h"
 
 #define BLOCK_SIZE 32
-#define N BLOCK_SIZE
-
+#define N 32*2 //BLOCK_SIZE
 #define TILE_WIDTH BLOCK_SIZE
 
 #define m_cell_fms "%d"
 
-#define M(m, row, col) m.elements[row * m.rows + col]
+#define M(m, row, col) m.elements[(row) * m.cols + (col)]
 #define SIZE(m) m.cols * m.rows * sizeof(m_cell)
 
 #define CUDA_ERROR_CHECK(x)\
@@ -83,7 +82,7 @@ int main(void)
     dim3 dimGrid(c.cols / dimBlock.x, c.rows / dimBlock.y);
     
     TIME_GET(start);
-    mat_mult_kernel<<<dimGrid, dimBlock>>>(d_a, d_b, d_c);
+    mat_mult_tiling_kernel<<<dimGrid, dimBlock>>>(d_a, d_b, d_c);
     cudaDeviceSynchronize();
     TIME_GET(stop);
     
@@ -91,9 +90,13 @@ int main(void)
 
     cudaMemcpy(c.elements, d_c.elements, SIZE(d_c), cudaMemcpyDeviceToHost);
 
-    print_matrix(a);
-    print_matrix(b);
-    print_matrix(c);
+    //print_matrix(a);
+    //print_matrix(b);
+    //print_matrix(c);
+
+    printf("\t"m_cell_fms"\n", M(c, N-1, 0));
+    printf("\t"m_cell_fms"\n", M(c, 0, N-1));
+    printf("\t"m_cell_fms"\n", M(c, N-1, N-1));
     
     // free memory
     free(a.elements);
@@ -153,7 +156,6 @@ __global__ void mat_mult_tiling_kernel(const Matrix a, const Matrix b, const Mat
             cval += a_ds[ty][i] * b_ds[i][tx];
         }
         
-        // synchronization here required?
         __syncthreads();
     }
 
