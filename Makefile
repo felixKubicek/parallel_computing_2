@@ -1,7 +1,8 @@
-
 CC=/usr/local/apps/cuda/7.5/bin/nvcc
 CFLAGS=-DVALIDATE
+TARGET=mat_mult
 
-
-mat_mult: mat_mult.cu
+$(TARGET): $(TARGET).cu
 	$(CC) -o $@  $< $(CFLAGS)
+clean:
+	rm $(TARGET)

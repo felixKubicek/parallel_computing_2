@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+from subprocess import *
+
+def main():
+    try:
+        call(["make"])
+
+        output = check_output(["./mat_mult"])
+        print "output: {}".format(output)
+
+        call(["make","clean"])
+
+    except CalledProcessError:
+        print "benchmark error (matrix multiplication exited with non-zero value)"
+
+if __name__ == "__main__":
+    main()
