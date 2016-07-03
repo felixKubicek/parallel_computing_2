@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h> 
+#include <stdbool.h>
 #include "ca_common.h"
 
 #define BLOCK_SIZE 32
-#define N 32*2 //BLOCK_SIZE
 #define TILE_WIDTH BLOCK_SIZE
+#define N 32*5
 
 #define m_cell_fms "%d"
 
@@ -32,6 +33,7 @@ typedef struct {
 } Matrix;
 
 
+bool matrix_equal(const Matrix a, const Matrix b);
 void mat_mult(const Matrix, const Matrix, const Matrix);
 void print_matrix(const Matrix);
 __global__ void mat_mult_kernel(const Matrix, const Matrix, const Matrix);
@@ -42,7 +44,7 @@ int main(void)
 {
     Matrix a, b, c;
     Matrix d_a, d_b, d_c;
-
+ 
     a.cols = a.rows = N;
     b.cols = b.rows = N;
 
@@ -52,6 +54,15 @@ int main(void)
     MALLOC_ERROR_CHECK(a.elements = (m_cell*) malloc(SIZE(a)));
     MALLOC_ERROR_CHECK(b.elements = (m_cell*) malloc(SIZE(b)));
     MALLOC_ERROR_CHECK(c.elements = (m_cell*) malloc(SIZE(c)));
+
+#ifdef VALIDATE
+    // c_host matrix calculated locally (compared with c matrix for validation) 
+    Matrix c_host;
+    c_host.rows = c.rows;
+    c_host.cols = c.cols;
+
+    MALLOC_ERROR_CHECK(c_host.elements = (m_cell*) malloc(SIZE(c_host)));
+#endif
 
     int row;
     int col;
@@ -90,24 +101,63 @@ int main(void)
 
     cudaMemcpy(c.elements, d_c.elements, SIZE(d_c), cudaMemcpyDeviceToHost);
 
-    //print_matrix(a);
-    //print_matrix(b);
-    //print_matrix(c);
-
-    printf("\t"m_cell_fms"\n", M(c, N-1, 0));
-    printf("\t"m_cell_fms"\n", M(c, 0, N-1));
-    printf("\t"m_cell_fms"\n", M(c, N-1, N-1));
-    
+#ifdef VALIDATE
+    mat_mult(a ,b ,c_host);
+    // validate c (kernel result matrix) with c_host matrix
+    bool valid_result = matrix_equal(c, c_host);
+#endif
+  
     // free memory
     free(a.elements);
     free(b.elements);
     free(c.elements);
+#ifdef VALIDATE
+    free(c_host.elements);
+#endif
 
     cudaFree(d_a.elements);
     cudaFree(d_b.elements);
     cudaFree(d_c.elements);
 
+#ifdef VALIDATE
+    if (valid_result)
+    {
+        printf("matrix multiplication successful\n");
+        return EXIT_SUCCESS;
+    }
+    else
+    {
+        printf("matrix multiplication failed (wrong result)\n");
+        return EXIT_FAILURE; 
+    }
+#else
     return EXIT_SUCCESS;
+#endif
+}
+
+
+bool matrix_equal(const Matrix a, const Matrix b)
+{
+    if (a.cols != b.cols || a.rows != b.rows)
+    {
+        return false;
+    } 
+    
+    int row;
+    int col;
+    for (row = 0; row < a.rows; row++)
+    {
+        for(col = 0; col < a.cols; col++)
+        {
+            if (M(a, row, col) != M(b, row, col))
+            {
+                return false;
+            } 
+        }
+
+    }
+    
+    return true;
 }
 
 
