@@ -5,7 +5,10 @@
 
 #define BLOCK_SIZE 32
 #define TILE_WIDTH BLOCK_SIZE
-#define N 32*5
+#ifndef N
+    //default N -> overwritten in makefile
+    #define N BLOCK_SIZE 
+#endif
 
 #define m_cell_fms "%d"
 
@@ -97,6 +100,8 @@ int main(void)
     cudaDeviceSynchronize();
     TIME_GET(stop);
     
+    double kernel_time = TIME_DIFF(start, stop);
+   
     CUDA_ERROR_CHECK(cudaPeekAtLastError());
 
     cudaMemcpy(c.elements, d_c.elements, SIZE(d_c), cudaMemcpyDeviceToHost);
@@ -122,12 +127,12 @@ int main(void)
 #ifdef VALIDATE
     if (valid_result)
     {
-        printf("matrix multiplication successful\n");
+        printf("{ \"valid\": true, \"n\": %d, \"kernel_time\": %*.9f}\n", N, kernel_time);
         return EXIT_SUCCESS;
     }
     else
     {
-        printf("matrix multiplication failed (wrong result)\n");
+        printf("{\"valid\": false}\n");
         return EXIT_FAILURE; 
     }
 #else
