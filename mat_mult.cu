@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h> 
 #include <stdbool.h>
@@ -5,9 +6,14 @@
 
 #define BLOCK_SIZE 32
 #define TILE_WIDTH BLOCK_SIZE
+
 #ifndef N
     //default N -> overwritten in makefile
     #define N BLOCK_SIZE 
+#endif
+
+#ifndef CUDA_CACHE_CONFIG
+    #define CUDA_CACHE_CONFIG cudaFuncCachePreferNone
 #endif
 
 #define m_cell_fms "%d"
@@ -39,8 +45,58 @@ typedef struct {
 bool matrix_equal(const Matrix a, const Matrix b);
 void mat_mult(const Matrix, const Matrix, const Matrix);
 void print_matrix(const Matrix);
-__global__ void mat_mult_kernel(const Matrix, const Matrix, const Matrix);
-__global__ void mat_mult_tiling_kernel(const Matrix, const Matrix, const Matrix);
+__global__ void mat_mult_kernel(const Matrix a, const Matrix b, const Matrix c);
+
+__global__ void mat_mult_kernel(const Matrix a, const Matrix b, const Matrix c) 
+{
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    int inner;
+    m_cell sum = 0;
+    for (inner = 0; inner < a.cols; inner++)
+    {
+        sum += M(a, row, inner) * M(b, inner, col);
+    }
+    M(c, row, col) = sum; 
+}
+
+
+__global__ void mat_mult_tiling_kernel(const Matrix a, const Matrix b, const Matrix c)
+{
+    __shared__ m_cell a_ds [TILE_WIDTH][TILE_WIDTH];
+    __shared__ m_cell b_ds [TILE_WIDTH][TILE_WIDTH];
+    
+    int bx = blockIdx.x;
+    int by = blockIdx.y;
+
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
+
+    int row = by * TILE_WIDTH + ty;
+    int col = bx * TILE_WIDTH + tx;
+
+    m_cell cval = 0;
+
+    int t;
+    for (t = 0; t < a.cols/TILE_WIDTH; t++)
+    {
+        a_ds[ty][tx] = M(a, row, t*TILE_WIDTH+tx);
+        b_ds[ty][tx] = M(b, t*TILE_WIDTH + ty, col);
+        
+        __syncthreads();
+        
+        int i; 
+        for(i=0; i < TILE_WIDTH; i++)
+        {
+            cval += a_ds[ty][i] * b_ds[i][tx];
+        }
+        
+        __syncthreads();
+    }
+
+    M(c, row, col) = cval;
+}
 
 
 int main(void)
@@ -94,9 +150,11 @@ int main(void)
 
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); 
     dim3 dimGrid(c.cols / dimBlock.x, c.rows / dimBlock.y);
+
+    CUDA_ERROR_CHECK(cudaFuncSetCacheConfig(mat_mult_kernel, cudaFuncCachePreferShared));
     
     TIME_GET(start);
-    mat_mult_tiling_kernel<<<dimGrid, dimBlock>>>(d_a, d_b, d_c);
+    mat_mult_kernel<<<dimGrid, dimBlock>>>(d_a, d_b, d_c);
     cudaDeviceSynchronize();
     TIME_GET(stop);
     
@@ -127,7 +185,23 @@ int main(void)
 #ifdef VALIDATE
     if (valid_result)
     {
-        printf("{ \"valid\": true, \"n\": %d, \"kernel_time\": %*.9f}\n", N, kernel_time);
+        char *cache_config;
+        switch(CUDA_CACHE_CONFIG)
+        {
+            case cudaFuncCachePreferShared:
+                cache_config = "prefer_shared";
+                break; 
+            case cudaFuncCachePreferL1:
+                cache_config = "prefer_L1";
+                break; 
+            case cudaFuncCachePreferEqual:
+                cache_config = "prefer_equal";
+                break;
+            default :
+                cache_config = "undefined";
+        }
+        
+        printf("{ \"valid\": true, \"n\": %d, \"kernel_time\": %.9f, \"cache_config\": %s}\n", N, kernel_time, cache_config);
         return EXIT_SUCCESS;
     }
     else
@@ -163,58 +237,6 @@ bool matrix_equal(const Matrix a, const Matrix b)
     }
     
     return true;
-}
-
-
-__global__ void mat_mult_kernel(const Matrix a, const Matrix b, const Matrix c) 
-{
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-
-    int inner;
-    m_cell sum = 0;
-    for (inner = 0; inner < a.cols; inner++)
-    {
-        sum += M(a, row, inner) * M(b, inner, col);
-    }
-    M(c, row, col) = sum; 
-}
-
-
-__global__ void mat_mult_tiling_kernel(const Matrix a, const Matrix b, const Matrix c)
-{
-    __shared__ m_cell a_ds [TILE_WIDTH][TILE_WIDTH];
-    __shared__ m_cell b_ds [TILE_WIDTH][TILE_WIDTH];
-    
-    int bx = blockIdx.x;
-    int by = blockIdx.y;
-
-    int tx = threadIdx.x;
-    int ty = threadIdx.y;
-
-    int row = by * TILE_WIDTH + ty;
-    int col = bx * TILE_WIDTH + tx;
-
-    m_cell cval = 0;
-
-    int t;
-    for (t = 0; t < a.cols/TILE_WIDTH; t++)
-    {
-        a_ds[ty][tx] = M(a, row, t*TILE_WIDTH+tx);
-        b_ds[ty][tx] = M(b, t*TILE_WIDTH + ty, col);
-        
-        __syncthreads();
-        
-        int i; 
-        for(i=0; i < TILE_WIDTH; i++)
-        {
-            cval += a_ds[ty][i] * b_ds[i][tx];
-        }
-        
-        __syncthreads();
-    }
-
-    M(c, row, col) = cval;
 }
 
 

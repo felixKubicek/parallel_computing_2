@@ -2,14 +2,20 @@
 import json
 import subprocess
 
-def main():
-    try:
-        subprocess.call(["make"])
 
+
+
+def main():
+    
+    cache_configs = {'cudaFuncCachePreferShared' : 1, 'cudaFuncCachePreferL1' : 2,  'cudaFuncCachePreferEqual' : 3}
+    N = 32*3
+
+    try:
+        subprocess.call(["make", "N={}".format(N), "CACHE_CONFIG={}".format(cache_configs['cudaFuncCachePreferShared'])])
         output = subprocess.check_output(["./mat_mult"])
         print "output: {}".format(output)
 
-        subprocess.call(["make","clean"])
+        subprocess.call(["make", "clean"])
 
     except subprocess.CalledProcessError:
         print "benchmark error (matrix multiplication exited with non-zero value)"
