@@ -11,7 +11,7 @@ def main():
     N = 32*3
 
     try:
-        subprocess.call(["make", "N={}".format(N), "CACHE_CONFIG={}".format(cache_configs['cudaFuncCachePreferShared'])])
+        subprocess.call(["make", "N={}".format(N), "CACHE_CONFIG={}".format(cache_configs['cudaFuncCachePreferL1'])])
         output = subprocess.check_output(["./mat_mult"])
         print "output: {}".format(output)
 
