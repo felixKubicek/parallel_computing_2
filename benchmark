@@ -1,22 +1,54 @@
 #!/usr/bin/env python
 import json
+import csv
 import subprocess
+import os
 
-
-
+FNULL = open(os.devnull, 'w')
+tiling = False
 
 def main():
     
-    cache_configs = {'cudaFuncCachePreferShared' : 1, 'cudaFuncCachePreferL1' : 2,  'cudaFuncCachePreferEqual' : 3}
-    N = 32*3
+    cache_configs = {"prefer_shared": 1, "prefer_L1": 2, "prefer_equal": 3}
+    results = []
 
     try:
-        subprocess.call(["make", "N={}".format(N), "CACHE_CONFIG={}".format(cache_configs['cudaFuncCachePreferL1'])])
-        output = subprocess.check_output(["./mat_mult"])
-        print "output: {}".format(output)
 
-        subprocess.call(["make", "clean"])
+        subprocess.call(["make", "clean"], stdout = FNULL, stderr=FNULL)
+        
+        for N in [32*2]:
+            result = {'N': N, 'tiling': tiling}
+            for config_name, config_value in cache_configs.iteritems():
 
+                XCFLAGS = "-DTILING" if tiling else '' 
+
+                subprocess.call(["make", "N={}".format(N), "CUDA_CACHE_CONFIG={}".format(config_value), "XCFLAGS={}".format(XCFLAGS)])
+                output = subprocess.check_output(["./mat_mult"])
+                json_output = json.loads(output)
+                print "output: {}".format(output)
+
+                assert(json_output["valid"])
+                assert(json_output['N'] == N)
+                assert(json_output["cache_config"] == config_name)
+                if tiling:
+                    assert(json_output["kernel"] == 'mat_mult_tiling_kernel')
+                else:
+                    assert(json_output["kernel"] == 'mat_mult_kernel')
+                
+                result[config_name] = json_output["kernel_time"]
+                subprocess.call(["make", "clean"], stdout = FNULL)
+
+            results.append(result)
+
+        filename = "mult_bench" if not tiling else "mult_bench_tiling"
+
+        with open(filename + ".csv", 'w') as csvfile:
+            fieldnames = ['N', "tiling"] + cache_configs.keys()
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in results:
+                writer.writerow(row)
+        
     except subprocess.CalledProcessError:
         print "benchmark error (matrix multiplication exited with non-zero value)"
 

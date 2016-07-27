@@ -10,6 +10,15 @@
 #define M(m, row, col) m.elements[(row) * m.cols + (col)]
 #define SIZE(m) m.cols * m.rows * sizeof(m_cell)
 
+#ifdef TILING
+#define MULT_KERNEL mat_mult_tiling_kernel
+#else
+#define MULT_KERNEL mat_mult_kernel
+#endif
+
+#define STR(s) XSTR(s)
+#define XSTR(s) #s
+
 #define CUDA_ERROR_CHECK(x)\
     do {cudaError_t last_err = (x);\
         if (last_err != cudaSuccess)\
@@ -36,7 +45,8 @@ bool matrix_equal(const Matrix a, const Matrix b);
 void mat_mult(const Matrix, const Matrix, const Matrix);
 void print_matrix(const Matrix);
 __global__ void mat_mult_kernel(const Matrix a, const Matrix b, const Matrix c);
-
+__global__ void mat_mult_tiling_kernel(const Matrix a, const Matrix b, const Matrix c);
+void set_cache_config(int cache_config, const char ** cache_config_str);
 
 int main(void)
 {
@@ -87,10 +97,11 @@ int main(void)
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); 
     dim3 dimGrid(c.cols / dimBlock.x, c.rows / dimBlock.y);
 
-    CUDA_ERROR_CHECK(cudaFuncSetCacheConfig(mat_mult_kernel, cudaFuncCachePreferShared));
+    const char *cache_config_str;
+    set_cache_config(CUDA_CACHE_CONFIG, &cache_config_str);
     
     TIME_GET(start);
-    mat_mult_kernel<<<dimGrid, dimBlock>>>(d_a, d_b, d_c);
+    MULT_KERNEL<<<dimGrid, dimBlock>>>(d_a, d_b, d_c);
     cudaDeviceSynchronize();
     TIME_GET(stop);
     
@@ -116,26 +127,7 @@ int main(void)
 
     if (valid_result)
     {
-        const char *cache_config;
-        switch(CUDA_CACHE_CONFIG)
-        {
-            case cudaFuncCachePreferNone:
-                cache_config = "prefer_none";
-                break;
-            case cudaFuncCachePreferShared:
-                cache_config = "prefer_shared";
-                break; 
-            case cudaFuncCachePreferL1:
-                cache_config = "prefer_L1";
-                break; 
-            case cudaFuncCachePreferEqual:
-                cache_config = "prefer_equal";
-                break;
-            default :
-                cache_config = "undefined";
-        }
-        
-        printf("{ \"valid\": true, \"n\": %d, \"kernel_time\": %.9f, \"cache_config\": %s}\n", N, kernel_time, cache_config);
+        printf("{ \"valid\": true, \"N\": %d, \"kernel_time\": %.9f, \"cache_config\": \"%s\", \"kernel\": \"%s\"}\n", N, kernel_time, cache_config_str, STR(MULT_KERNEL));
         return EXIT_SUCCESS;
     }
     else
@@ -143,6 +135,33 @@ int main(void)
         printf("{\"valid\": false}\n");
         return EXIT_FAILURE;
     }
+}
+
+
+void set_cache_config(int cache_config, const char ** cache_config_str)
+{
+    switch(cache_config)
+    {
+        case cudaFuncCachePreferNone:
+            CUDA_ERROR_CHECK(cudaFuncSetCacheConfig(MULT_KERNEL, cudaFuncCachePreferNone));
+            *cache_config_str = "prefer_none";
+            break;
+        case cudaFuncCachePreferShared:
+            CUDA_ERROR_CHECK(cudaFuncSetCacheConfig(MULT_KERNEL, cudaFuncCachePreferShared));
+            *cache_config_str = "prefer_shared";
+            break; 
+        case cudaFuncCachePreferL1:
+            CUDA_ERROR_CHECK(cudaFuncSetCacheConfig(MULT_KERNEL, cudaFuncCachePreferL1));
+            *cache_config_str = "prefer_L1";
+            break; 
+        case cudaFuncCachePreferEqual:
+            CUDA_ERROR_CHECK(cudaFuncSetCacheConfig(MULT_KERNEL, cudaFuncCachePreferEqual));
+            *cache_config_str = "prefer_equal";
+            break;
+        default :
+            *cache_config_str = "undefined";
+    }
+
 }
 
 
