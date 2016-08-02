@@ -12,7 +12,7 @@
            (a)[(y)-1][(x)  ] + (a)[(y)][(x)  ] + (a)[(y)+1][(x)  ] +\
            (a)[(y)-1][(x)+1] + (a)[(y)][(x)+1] + (a)[(y)+1][(x)+1]])
 
-#define transition_torus(a, x_prev, y_prev, x, y, x_next, y_next) \
+#define transition_cuda(a, x_prev, y_prev, x, y, x_next, y_next) \
    (anneal[(a)[y_prev][x_prev] + (a)[(y)][x_prev] + (a)[y_next][x_prev] +\
            (a)[y_prev][(x)   ] + (a)[(y)][(x)   ] + (a)[y_next][(x)   ] +\
            (a)[y_prev][x_next] + (a)[(y)][x_next] + (a)[y_next][x_next]])
@@ -32,18 +32,20 @@ extern "C" {
 #endif
 
 /* horizontal size of the configuration */
-#define XSIZE 32 //1024
+#define XSIZE 1024
 #define LINE_SIZE (XSIZE + 2)
 
 /* "ADT" State and line of states (plus border) */
 typedef uint8_t cell_state_t;
 typedef cell_state_t line_t[XSIZE + 2];
+typedef cell_state_t line_t_cuda[XSIZE];
 
 void ca_init(int argc, char** argv, int *lines, int *its);
 void ca_init_config(line_t *buf, int lines, int skip_lines);
-void ca_init_config_cuda(line_t *buf, int lines, int skip_lines);
+void ca_init_config_cuda(line_t_cuda *buf, int lines, int skip_lines);
 void ca_hash_and_report(line_t *buf, int lines, double time_in_s);
 void print_field(line_t *field, int lines);
+void print_field_cuda(line_t_cuda *field, int lines);
 #ifdef __cplusplus
 }
 #endif

@@ -25,9 +25,21 @@
 
 void print_field(line_t *field, int lines)
 {
+    for(int y = 1; y <= lines; y++)
+    {
+        for (int x = 1; x <= XSIZE; x++)
+        {
+            printf("%d", field[y][x]);   
+        }
+        printf("\n");
+    }
+}
+
+void print_field_cuda(line_t_cuda *field, int lines)
+{
     for(int y = 0; y < lines; y++)
     {
-        for (int x = 0; x < XSIZE+2; x++)
+        for (int x = 0; x < XSIZE; x++)
         {
             printf("%d", field[y][x]);   
         }
@@ -67,7 +79,7 @@ void ca_init_config(line_t *buf, int lines, int skip_lines)
 }
 
 /* random starting configuration for cuda (without ghostzones) */
-void ca_init_config_cuda(line_t *buf, int lines, int skip_lines)
+void ca_init_config_cuda(line_t_cuda *buf, int lines, int skip_lines)
 {
 	volatile int scratch;
 
@@ -75,13 +87,13 @@ void ca_init_config_cuda(line_t *buf, int lines, int skip_lines)
 
 	/* let the RNG spin for some rounds (used for distributed initialization) */
 	for (int y = 0;  y < skip_lines;  y++) {
-		for (int x = 1;  x <= XSIZE;  x++) {
+		for (int x = 0;  x < XSIZE;  x++) {
 			scratch = scratch + randInt(100) >= 50;
 		}
 	}
 
 	for (int y = 0;  y < lines;  y++) {
-		for (int x = 1;  x <= XSIZE;  x++) {
+		for (int x = 0;  x < XSIZE;  x++) {
 			buf[y][x] = randInt(100) >= 50;
 		}
 	}
