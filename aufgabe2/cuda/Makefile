@@ -24,8 +24,8 @@ C_DEPS=ca_common.c random.c
 
 MPI_TARGETS=ca_mpi_p2p ca_mpi_p2p_nb ca_mpi_osc
 
-TARGETS=ca_seq \
-	ca_cuda_2d
+TARGETS=ca_cuda_2d
+        #ca_seq \
 	#ca_openmp \
 	#ca_cuda_1d ca_openacc \
 	#$(MPI_TARGETS)
