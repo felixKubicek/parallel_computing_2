@@ -42,21 +42,6 @@ __constant__ static const cell_state_t anneal[10] = {0, 0, 0, 0, 1, 0, 1, 1, 1, 
  */
 __global__ static void simulate(line_t_cuda *from, line_t_cuda *to, int lines)
 {
-        // TODO: for loops for x and y dimension 
-        /*
-        for (int y = 0; y < lines; y++) {
-		for (int x = 0; x < XSIZE; x++) {
-
-                        int x_prev = ((x - 1) + XSIZE) % XSIZE;
-                        int y_prev = ((y - 1) + lines) % lines;
-                        int x_next = (x + 1) % XSIZE; 
-                        int y_next = (y + 1) % lines; 
-
-			to[y][x] = transition_cuda(from, x_prev, y_prev, x, y, x_next, y_next);
-		}
-	}
-        */
-
         int x = threadIdx.x + blockIdx.x * blockDim.x;
         int y = threadIdx.y + blockIdx.y * blockDim.y;
         
@@ -95,13 +80,15 @@ int main(int argc, char** argv)
         dim3 dimGrid(XSIZE/dimBlock.x, lines/dimBlock.y);
 
 	TIME_GET(sim_start);
-	for (int i = 0; i < its; i++) {
+	for (int i = 0; i < its; i++) 
+        {
 		simulate <<<dimGrid, dimBlock>>> (from_d, to_d, lines);
 
 		line_t_cuda *temp = from_d;
 		from_d = to_d;
 		to_d = temp;
 	}
+        cudaDeviceSynchronize();
 	TIME_GET(sim_stop);
 
         CUDA_ERROR_CHECK(cudaPeekAtLastError());
@@ -112,7 +99,6 @@ int main(int argc, char** argv)
             memcpy((void *) &verify_field[y][1], (void *) &from[y-1][0], XSIZE);
         }
 
-        //print_field(verify_field, lines);
 	ca_hash_and_report(verify_field + 1, lines, TIME_DIFF(sim_start, sim_stop));
 
 	free(from);
