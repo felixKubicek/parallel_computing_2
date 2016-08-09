@@ -27,6 +27,11 @@
  */
 static const cell_state_t anneal[10] = {0, 0, 0, 0, 1, 0, 1, 1, 1, 1};
 
+#define CL_ERROR_CHECK(x)\
+        do {\
+            if ((x) != CL_SUCCESS)\
+                {fprintf(stderr ,"OpenCL error (%d): %s: %u\n", x, __FILE__, __LINE__); exit (EXIT_FAILURE); }\
+        } while (0)
 
 int main(int argc, char** argv)
 {
@@ -39,18 +44,19 @@ int main(int argc, char** argv)
         cl_command_queue queue;
         cl_program program;
         cl_kernel kernel;
+        cl_int error;
 
-        clGetPlatformIDs(1, &platform, NULL);
-        clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &num_devices);
+        CL_ERROR_CHECK(error = clGetPlatformIDs(1, &platform, NULL));
+        CL_ERROR_CHECK(error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &num_devices));
 
         MALLOC_ERROR_CHECK(devices = (cl_device_id *) calloc(num_devices, sizeof(cl_device_id)));
-        clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, num_devices, devices, NULL);
+        CL_ERROR_CHECK(error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, num_devices, devices, NULL));
 
         char device_name[1024];
         for(int i = 0; i < num_devices; i++)
         {
             gpu_dev = devices[i];
-            clGetDeviceInfo(gpu_dev, CL_DEVICE_NAME, sizeof(device_name), (void *) device_name, NULL);
+            CL_ERROR_CHECK(error = clGetDeviceInfo(gpu_dev, CL_DEVICE_NAME, sizeof(device_name), (void *) device_name, NULL));
 
             if (strstr(device_name, GPU) != NULL)
             {
@@ -59,10 +65,11 @@ int main(int argc, char** argv)
         }
 
         //printf("device %d: %s\n", gpu_dev, device_name);
-        context = clCreateContext(0, 1, &gpu_dev, NULL, NULL, NULL);
+        context = clCreateContext(0, 1, &gpu_dev, NULL, NULL, &error);
+        CL_ERROR_CHECK(error);
 
-        queue = clCreateCommandQueue(context, gpu_dev, 0, NULL);
-
+        queue = clCreateCommandQueue(context, gpu_dev, 0, &error);
+        CL_ERROR_CHECK(error);
 
         free(devices);
 
