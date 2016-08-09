@@ -25,12 +25,6 @@
                 {fprintf(stderr ,"%s:%u: CUDA error: %s\n", __FILE__, __LINE__, cudaGetErrorString ( last_err )); exit(EXIT_FAILURE); }\
     } while (false)
 
-#define MALLOC_ERROR_CHECK(x)\
-        do {\
-            if ( (x) == NULL)\
-                {fprintf(stderr ,"%s:%u: malloc error!\n", __FILE__, __LINE__); exit (EXIT_FAILURE); }\
-        } while (false)
-
 /* --------------------- CA simulation -------------------------------- */
 
 /* annealing rule from ChoDro96 page 34

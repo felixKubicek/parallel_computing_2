@@ -17,7 +17,6 @@
            (a)[y_prev][(x)   ] + (a)[(y)][(x)   ] + (a)[y_next][(x)   ] +\
            (a)[y_prev][x_next] + (a)[(y)][x_next] + (a)[y_next][x_next]])
 
-
 #define TIME_GET(timer) \
 	struct timespec timer; \
 	clock_gettime(CLOCK_MONOTONIC, &timer)
@@ -26,6 +25,11 @@
 	((timer2.tv_sec * 1.0E+9 + timer2.tv_nsec) - \
 	 (timer1.tv_sec * 1.0E+9 + timer1.tv_nsec)) / 1.0E+9
 
+#define MALLOC_ERROR_CHECK(x)\
+        do {\
+            if ( (x) == NULL)\
+                {fprintf(stderr ,"%s:%u: malloc error!\n", __FILE__, __LINE__); exit (EXIT_FAILURE); }\
+        } while (0)
 
 #ifdef __cplusplus
 extern "C" {
