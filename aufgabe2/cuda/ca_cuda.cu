@@ -14,8 +14,10 @@
 #include <stdlib.h>
 #include "ca_common.h"
 
-#define BLOCK_SIZE_X 32
-#define BLOCK_SIZE_Y 20
+#ifdef USE_2D_MAPPING  
+    #define BLOCK_SIZE_X 32
+    #define BLOCK_SIZE_Y 4
+#endif
 
 #define CUDA_ERROR_CHECK(x)\
     do {cudaError_t last_err = (x);\
@@ -42,15 +44,33 @@ __constant__ static const cell_state_t anneal[10] = {0, 0, 0, 0, 1, 0, 1, 1, 1, 
  */
 __global__ static void simulate(line_t_cuda *from, line_t_cuda *to, int lines)
 {
+#ifdef USE_2D_MAPPING  
         int x = threadIdx.x + blockIdx.x * blockDim.x;
         int y = threadIdx.y + blockIdx.y * blockDim.y;
         
         int x_prev = ((x - 1) + XSIZE) % XSIZE;
         int y_prev = ((y - 1) + lines) % lines;
         int x_next = (x + 1) % XSIZE; 
-        int y_next = (y + 1) % lines; 
-
+        int y_next = (y + 1) % lines;
+                    
         to[y][x] = transition_cuda(from, x_prev, y_prev, x, y, x_next, y_next);
+#else
+        int gid = threadIdx.x + blockIdx.x * blockDim.x;
+        int grid_size = blockDim.x * gridDim.x;
+
+        for (int i = gid; i < lines * XSIZE; i+= grid_size)
+        {
+            int x = i % XSIZE;
+            int y = i / XSIZE;
+            
+            int x_prev = ((x - 1) + XSIZE) % XSIZE;
+            int y_prev = ((y - 1) + lines) % lines;
+            int x_next = (x + 1) % XSIZE; 
+            int y_next = (y + 1) % lines;
+                    
+            to[y][x] = transition_cuda(from, x_prev, y_prev, x, y, x_next, y_next);
+        }
+#endif
 }
 
 /* --------------------- measurement ---------------------------------- */
@@ -76,15 +96,19 @@ int main(int argc, char** argv)
         CUDA_ERROR_CHECK(cudaMemcpy((void *) from_d, (void *) from, lines * sizeof(line_t_cuda), cudaMemcpyHostToDevice));
         CUDA_ERROR_CHECK(cudaMemcpy((void *) to_d, (void *) to, lines * sizeof(line_t_cuda), cudaMemcpyHostToDevice));
 
+#ifdef USE_2D_MAPPING  
         dim3 dimBlock(BLOCK_SIZE_X, BLOCK_SIZE_Y);
         dim3 dimGrid(XSIZE/dimBlock.x, lines/dimBlock.y);
-
+#endif
 	TIME_GET(sim_start);
 	for (int i = 0; i < its; i++) 
         {
+#ifdef USE_2D_MAPPING  
 		simulate <<<dimGrid, dimBlock>>> (from_d, to_d, lines);
-
-		line_t_cuda *temp = from_d;
+#else
+                simulate <<<lines, XSIZE/4>>> (from_d, to_d, lines);
+#endif
+                line_t_cuda *temp = from_d;
 		from_d = to_d;
 		to_d = temp;
 	}
