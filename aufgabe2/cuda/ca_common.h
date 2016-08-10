@@ -31,12 +31,10 @@
                 {fprintf(stderr ,"%s:%u: malloc error!\n", __FILE__, __LINE__); exit (EXIT_FAILURE); }\
         } while (0)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+#define STR(s) XSTR(s)
+#define XSTR(s) #s
 /* horizontal size of the configuration */
-#define XSIZE 1024
+#define XSIZE 128//1024
 #define LINE_SIZE (XSIZE + 2)
 
 /* "ADT" State and line of states (plus border) */
@@ -50,24 +48,4 @@ void ca_init_config_cuda(line_t_cuda *buf, int lines, int skip_lines);
 void ca_hash_and_report(line_t *buf, int lines, double time_in_s);
 void print_field(line_t *field, int lines);
 void print_field_cuda(line_t_cuda *field, int lines);
-#ifdef __cplusplus
-}
-#endif
-
-#ifdef USE_MPI
-
-/* next/prev process in communicator */
-#define PREV_PROC(n, num_procs) ((n - 1 + num_procs) % num_procs)
-#define SUCC_PROC(n, num_procs) ((n + 1) % num_procs)
-
-#define CA_MPI_CELL_DATATYPE MPI_BYTE
-
-void ca_mpi_init(int num_procs, int rank, int num_total_lines,
-		int *num_local_lines, int *global_first_line);
-void ca_mpi_hash_and_report(line_t* local_buf, int num_local_lines,
-		int num_total_lines, int num_procs, double time_in_s);
-
-#endif /* USE_MPI */
-
-
 #endif /* CA_COMMON_H */
