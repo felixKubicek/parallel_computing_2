@@ -34,6 +34,10 @@
 #define STR(s) XSTR(s)
 #define XSTR(s) #s
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* horizontal size of the configuration */
 #define XSIZE 1024
 #define LINE_SIZE (XSIZE + 2)
@@ -49,4 +53,10 @@ void ca_init_config_cuda(line_t_cuda *buf, int lines, int skip_lines);
 void ca_hash_and_report(line_t *buf, int lines, double time_in_s);
 void print_field(line_t *field, int lines);
 void print_field_cuda(line_t_cuda *field, int lines);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* CA_COMMON_H */
+

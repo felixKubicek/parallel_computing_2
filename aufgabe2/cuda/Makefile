@@ -19,9 +19,9 @@ C_DEPS=ca_common.c random.c
 
 MPI_TARGETS=ca_mpi_p2p ca_mpi_p2p_nb ca_mpi_osc
 
-TARGETS=ca_opencl 
-	#ca_cuda_1d ca_cuda_2d
-	#ca_seq \
+TARGETS=ca_cuda_2d
+	#ca_cuda_1d 
+	#ca_opencl ca_seq \
 	#ca_openacc 
 
 .PHONY: all
