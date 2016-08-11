@@ -33,8 +33,9 @@
 
 #define STR(s) XSTR(s)
 #define XSTR(s) #s
+
 /* horizontal size of the configuration */
-#define XSIZE 128//1024
+#define XSIZE 1024
 #define LINE_SIZE (XSIZE + 2)
 
 /* "ADT" State and line of states (plus border) */

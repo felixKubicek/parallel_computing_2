@@ -23,16 +23,18 @@
 #define WORK_GROUP_SIZE_X 32
 #define WORK_GROUP_SIZE_Y 20
 
+#define CL_TYPEDEF_CELL_T typedef unsigned char cl_cell_state_t
+#define CL_TYPEDEF_LINE_T typedef cl_cell_state_t cl_line_t[XSIZE]
+
+CL_TYPEDEF_CELL_T;
+CL_TYPEDEF_LINE_T;   
 /* --------------------- CA simulation -------------------------------- */
 
 /* annealing rule from ChoDro96 page 34
  * the table is used to map the number of nonzero
  * states in the neighborhood to the new state
  */
-typedef unsigned char cl_cell_state_t;
-typedef cl_cell_state_t cl_line_t[XSIZE];
-
-static const cell_state_t anneal[10] = {0, 0, 0, 0, 1, 0, 1, 1, 1, 1};
+static const cl_cell_state_t anneal[10] = {0, 0, 0, 0, 1, 0, 1, 1, 1, 1};
 
 #define CL_ERROR_CHECK(x)\
         do {\
@@ -40,45 +42,28 @@ static const cell_state_t anneal[10] = {0, 0, 0, 0, 1, 0, 1, 1, 1, 1};
                 {fprintf(stderr ,"OpenCL error (%d): %s: %u\n", x, __FILE__, __LINE__); exit (EXIT_FAILURE); }\
         } while (0)
 
-
-const char* source = STR(typedef unsigned char cl_cell_state_t;
-                         typedef cl_cell_state_t cl_line_t[XSIZE];
-                         __kernel void simulate(__global cl_line_t *from, __global cl_line_t *to, const int lines)
+const char* source = STR(CL_TYPEDEF_CELL_T;
+                         CL_TYPEDEF_LINE_T;   
+                         __kernel void simulate(__global cl_line_t *from, __global cl_line_t *to, const int lines, __constant cl_cell_state_t anneal[10])
                          {
+
                             int x = get_global_id(0);
                             int y = get_global_id(1);
 
-                           if ((get_local_id(0) == 0) && (get_local_id(1) == 0))
-                           {
-                               from[y][x] = 1;
-                           }
-                           else
-                           {
-                               from[y][x] = 0;
-                           }
-                         });
-
-/*
-const char* source = STR(__kernel void simulate(__global line_t_cuda *from, __global line_t_cuda *to, const int lines)
-                         {
-                            int x = get_global_id(0);
-                            int y = get_global_id(1);
-                                 
                             int x_prev = ((x - 1) + XSIZE) % XSIZE;
                             int y_prev = ((y - 1) + lines) % lines;
                             int x_next = (x + 1) % XSIZE; 
                             int y_next = (y + 1) % lines;
                                              
                             to[y][x] = transition_cuda(from, x_prev, y_prev, x, y, x_next, y_next);
-                        });
-*/
+                         });
 
 int main(int argc, char** argv)
-{
+{    
         int lines, its;
         line_t *verify_field;
         cl_line_t *from, *to;
-        cl_mem from_d, to_d;
+        cl_mem from_d, to_d, anneal_d;
 
         cl_int err_num;
         cl_platform_id platform = NULL;
@@ -111,7 +96,7 @@ int main(int argc, char** argv)
             }
         }
         //printf("device %d: %s\n", gpu_dev, device_name);
-        printf("\n\n%s\n\n", source);
+        //printf("\n\n%s\n\n", source);
         
         context = clCreateContext(0, 1, &gpu_dev, NULL, NULL, &error);
         CL_ERROR_CHECK(error);
@@ -129,11 +114,14 @@ int main(int argc, char** argv)
         CL_ERROR_CHECK(error);
         to_d = clCreateBuffer(context, CL_MEM_READ_WRITE, buffer_size, NULL, &error); 
         CL_ERROR_CHECK(error);
+        anneal_d = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(anneal), NULL, &error); 
+        CL_ERROR_CHECK(error);
 
 	ca_init_config_cuda(from, lines, 0);
 
         CL_ERROR_CHECK(error = clEnqueueWriteBuffer(queue, from_d, CL_TRUE, 0, buffer_size, from, 0, NULL, NULL));
         CL_ERROR_CHECK(error = clEnqueueWriteBuffer(queue, to_d, CL_TRUE, 0, buffer_size, to, 0, NULL, NULL));
+        CL_ERROR_CHECK(error = clEnqueueWriteBuffer(queue, anneal_d, CL_TRUE, 0, sizeof(anneal), anneal, 0, NULL, NULL));
 
         program = clCreateProgramWithSource(context, 1, &source, NULL, &error);
         CL_ERROR_CHECK(error);
@@ -146,23 +134,38 @@ int main(int argc, char** argv)
         const size_t local_work_size[WORK_DIM] = {WORK_GROUP_SIZE_X, WORK_GROUP_SIZE_Y};
         const size_t global_work_size[WORK_DIM] = {XSIZE, lines};
 
-        CL_ERROR_CHECK(error = clSetKernelArg(kernel, 0, sizeof(cl_mem), &from_d));
-        CL_ERROR_CHECK(error = clSetKernelArg(kernel, 1, sizeof(cl_mem), &to_d));
+        cl_mem *from_d_ptr = &from_d;
+        cl_mem *to_d_ptr = &to_d;
+        cl_mem *temp; 
+        
         CL_ERROR_CHECK(error = clSetKernelArg(kernel, 2, sizeof(int), &lines));
+        CL_ERROR_CHECK(error = clSetKernelArg(kernel, 3, sizeof(cl_mem), &anneal_d));
 
-	TIME_GET(sim_start);
-        CL_ERROR_CHECK(error = clEnqueueNDRangeKernel(queue, kernel, WORK_DIM, NULL, global_work_size, local_work_size, 0, NULL, NULL)); 
-        CL_ERROR_CHECK(error = clFinish(queue)); 
+        TIME_GET(sim_start);
+        for (int i = 0; i < its; i++) 
+        {        
+            CL_ERROR_CHECK(error = clSetKernelArg(kernel, 0, sizeof(cl_mem), from_d_ptr));
+            CL_ERROR_CHECK(error = clSetKernelArg(kernel, 1, sizeof(cl_mem), to_d_ptr));
+            CL_ERROR_CHECK(error = clEnqueueNDRangeKernel(queue, kernel, WORK_DIM, NULL, global_work_size, local_work_size, 0, NULL, NULL)); 
+        
+            temp = from_d_ptr;
+	    from_d_ptr = to_d_ptr;
+	    to_d_ptr = temp;
+        }   
+            
+        CL_ERROR_CHECK(error = clFinish(queue));
 	TIME_GET(sim_stop);
 
-        CL_ERROR_CHECK(error = clEnqueueReadBuffer(queue, from_d, CL_TRUE, 0, buffer_size, from, 0, NULL, NULL));
+        CL_ERROR_CHECK(error = clEnqueueReadBuffer(queue, *from_d_ptr, CL_TRUE, 0, buffer_size, from, 0, NULL, NULL));
 
         for(int y = 1; y <= lines; y++)
         {
-            memcpy((void *) &verify_field[y][1], (void *) &from[y-1][0], XSIZE);
+            for(int x = 1; x<= XSIZE; x++)
+            {
+                verify_field[y][x] = from[y-1][x-1];
+            }
         }
-
-        print_field(verify_field, lines);
+        //print_field(verify_field, lines);
 
 	ca_hash_and_report(verify_field + 1, lines, TIME_DIFF(sim_start, sim_stop));
 
