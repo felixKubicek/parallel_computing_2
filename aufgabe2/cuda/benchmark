@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+import sys
+import re
+import numpy
+import subprocess
+
+filename = None
+if len(sys.argv) > 1:
+    filename = sys.argv[1] + '.txt'
+
+PASSES = 3
+
+subprocess.call(["make"])
+bench_results = subprocess.check_output(["make", "bench", "PASSES={}".format(PASSES)])
+bench_results = bench_results.splitlines()
+output = []
+
+num_lines=None
+num_iter=None
+
+line_num = 0
+while line_num < len(bench_results):
+    line = bench_results[line_num]
+    match_obj = re.match(r"\s*(?P<lines>\d+) lines, (?P<iterations>\d+) iterations\s*", line)
+    
+    if match_obj:
+        num_lines = int(match_obj.group('lines'))
+        num_iter = int(match_obj.group('iterations'))
+        output.append("lines: {}, iterations: {}".format(num_lines, num_iter))
+        line_num += 1
+    else:
+        passes = bench_results[line_num:line_num+PASSES]
+        output += passes
+
+        passes_executable = map(lambda s: s.split()[0], passes)
+        assert(all(ex == passes_executable[0] for ex in passes_executable))
+
+        passes_times = map(lambda s: float(re.match(r".*time:\s*(?P<time>\d+\.\d+)\s*s.*", s).group('time')), passes)
+
+        output.append("average: {}; standard_deviation: {}".format(numpy.mean(passes_times), numpy.std(passes_times)))
+
+        line_num += PASSES
+
+output_str =  '\n'.join(output)
+
+if filename:
+    with open(filename, 'w') as output_file:
+        output_file.write(output_str)
+    print "results written to {}".format(filename)
+else:
+    print output_str

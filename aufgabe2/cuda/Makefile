@@ -1,3 +1,4 @@
+SHELL=/bin/bash
 BASE_CC=gcc
 ACC_CC=/usr/local/apps/openacc/15.10/linux86-64/15.10/bin/pgcc
 CUDA_CC=/usr/local/apps/cuda/7.5/bin/nvcc
@@ -19,9 +20,8 @@ C_DEPS=ca_common.c random.c
 
 MPI_TARGETS=ca_mpi_p2p ca_mpi_p2p_nb ca_mpi_osc
 
-TARGETS=ca_cuda_2d
-	#ca_cuda_1d 
-	#ca_opencl ca_seq \
+TARGETS=ca_cuda_1d ca_cuda_2d #ca_opencl
+        #ca_seq \
 	#ca_openacc 
 
 .PHONY: all
@@ -65,13 +65,18 @@ test: $(TARGETS)
 
 .PHONY: bench
 
+PASSES=1
 bench: $(TARGETS)
 	@for ITS in 1000 2000 3000; do \
 		for LINES in 1000 10000 100000; do \
 			echo "$$LINES lines, $$ITS iterations"; \
-			for BINARY in $^; do printf '%-10s\t' $$BINARY; ./$$BINARY $$LINES $$ITS; done; \
-		done \
-	done
+			for BINARY in $^; do \
+				for i in {1..${PASSES}}; do \
+					printf '%-10s\t' $$BINARY; ./$$BINARY $$LINES $$ITS; \
+				done; \
+			done; \
+		done; \
+	done;
 
 .PHONY: clean
 
