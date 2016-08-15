@@ -31,6 +31,12 @@
                 {fprintf(stderr ,"%s:%u: malloc error!\n", __FILE__, __LINE__); exit (EXIT_FAILURE); }\
         } while (0)
 
+#define CUDA_ERROR_CHECK(x)\
+    do {cudaError_t last_err = (x);\
+        if (last_err != cudaSuccess)\
+                {fprintf(stderr ,"%s:%u: CUDA error: %s\n", __FILE__, __LINE__, cudaGetErrorString ( last_err )); exit(EXIT_FAILURE); }\
+    } while (false)
+
 #define STR(s) XSTR(s)
 #define XSTR(s) #s
 

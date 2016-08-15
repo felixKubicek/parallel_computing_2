@@ -1,56 +1,51 @@
 #!/usr/bin/env python
+import sys
+import re
+import numpy
 import json
-import csv
 import subprocess
-import os
 
-FNULL = open(os.devnull, 'w')
-tiling = False
+filename = None
+if len(sys.argv) > 1:
+    filename = sys.argv[1] + '.txt'
 
-def main():
-    
-    cache_configs = {"prefer_shared": 1, "prefer_L1": 2, "prefer_equal": 3}
-    results = []
+FLOAT_FORM = "{:.3f}"
+PASSES = 3
 
-    try:
+subprocess.call(["make"])
+bench_results = subprocess.check_output(["make", "bench", "PASSES={}".format(PASSES)])
+bench_results = bench_results.splitlines()
+output = []
 
-        subprocess.call(["make", "clean"], stdout = FNULL, stderr=FNULL)
-        
-        for N in [32*2]:
-            result = {'N': N, 'tiling': tiling}
-            for config_name, config_value in cache_configs.iteritems():
+line_num = 0
+while line_num < len(bench_results):
+    line = bench_results[line_num]
 
-                XCFLAGS = "-DTILING" if tiling else '' 
+    passes = bench_results[line_num:line_num+PASSES]
 
-                subprocess.call(["make", "N={}".format(N), "CUDA_CACHE_CONFIG={}".format(config_value), "XCFLAGS={}".format(XCFLAGS)])
-                output = subprocess.check_output(["./mat_mult"])
-                json_output = json.loads(output)
-                print "output: {}".format(output)
+    passes_output = map(lambda s: json.loads(s), passes)
+    passes_times = map(lambda p: p['kernel_time'], passes_output)
 
-                assert(json_output["valid"])
-                assert(json_output['N'] == N)
-                assert(json_output["cache_config"] == config_name)
-                if tiling:
-                    assert(json_output["kernel"] == 'mat_mult_tiling_kernel')
-                else:
-                    assert(json_output["kernel"] == 'mat_mult_kernel')
-                
-                result[config_name] = json_output["kernel_time"]
-                subprocess.call(["make", "clean"], stdout = FNULL)
+    # validate output (same matrix dimension and cache config for each pass)
+    passes_assert = map(lambda p: [p['kernel'], p['cache_config'], p['n']], passes_output)
+    assert(all(p == passes_assert[0] for p in passes_assert))
+    # every run must be valid
+    assert(all(p["valid"] == True for p in passes_output))
 
-            results.append(result)
+    output.append("./{} {} {}\t times={} mean={} std_deviation={}".format(
+                            passes_output[0]['kernel'], 
+                            passes_output[0]['n'], 
+                            passes_output[0]['cache_config'],
+                            [FLOAT_FORM.format(t) for t in passes_times],
+                            FLOAT_FORM.format(numpy.mean(passes_times)),
+                            FLOAT_FORM.format(numpy.std(passes_times))))
+    line_num += PASSES
 
-        filename = "mult_bench" if not tiling else "mult_bench_tiling"
+output_str = '\n'.join(output)
 
-        with open(filename + ".csv", 'w') as csvfile:
-            fieldnames = ['N', "tiling"] + cache_configs.keys()
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in results:
-                writer.writerow(row)
-        
-    except subprocess.CalledProcessError:
-        print "benchmark error (matrix multiplication exited with non-zero value)"
-
-if __name__ == "__main__":
-    main()
+if filename:
+    with open(filename, 'w') as output_file:
+        output_file.write(output_str)
+    print "results written to {}".format(filename)
+else:
+    print output_str

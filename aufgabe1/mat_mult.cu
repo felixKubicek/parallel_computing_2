@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <stdbool.h>
-#include "ca_common.h"
+#include <assert.h>
+#include "../aufgabe2/ca_common.h"
 
 #define BLOCK_SIZE 32
 #define TILE_WIDTH BLOCK_SIZE
@@ -16,21 +17,6 @@
 #define MULT_KERNEL mat_mult_kernel
 #endif
 
-#define STR(s) XSTR(s)
-#define XSTR(s) #s
-
-#define CUDA_ERROR_CHECK(x)\
-    do {cudaError_t last_err = (x);\
-        if (last_err != cudaSuccess)\
-                {fprintf(stderr ,"%s:%u: CUDA error: %s\n", __FILE__, __LINE__, cudaGetErrorString ( last_err )); exit(EXIT_FAILURE); }\
-    } while (false)
-
-#define MALLOC_ERROR_CHECK(x)\
-        do {\
-            if ( (x) == NULL)\
-                {fprintf(stderr ,"%s:%u: malloc error!\n", __FILE__, __LINE__); exit (EXIT_FAILURE); }\
-        } while (false)
-
 #define m_cell_fms "%d"
 typedef int m_cell;
 
@@ -40,21 +26,26 @@ typedef struct {
     m_cell* elements;
 } Matrix;
 
-
 bool matrix_equal(const Matrix a, const Matrix b);
 void mat_mult(const Matrix, const Matrix, const Matrix);
 void print_matrix(const Matrix);
 __global__ void mat_mult_kernel(const Matrix a, const Matrix b, const Matrix c);
 __global__ void mat_mult_tiling_kernel(const Matrix a, const Matrix b, const Matrix c);
-void set_cache_config(int cache_config, const char ** cache_config_str);
+bool set_cache_config(int cache_config, const char ** cache_config_str);
+void mat_mult_init(int argc, char** argv, int *n, int *cache_config, const char ** cache_config_str);
 
-int main(void)
+int main(int argc, char** argv)
 {
+    int n, cache_config;
+    const char *cache_config_str;
+    
+    mat_mult_init(argc, argv, &n, &cache_config, &cache_config_str);
+
     Matrix a, b, c;
     Matrix d_a, d_b, d_c;
  
-    a.cols = a.rows = N;
-    b.cols = b.rows = N;
+    a.cols = a.rows = n;
+    b.cols = b.rows = n;
 
     c.rows = a.rows;
     c.cols = b.cols;
@@ -71,14 +62,17 @@ int main(void)
 
     int row;
     int col;
-    for (row = 0; row < N; row++)
+    for (row = 0; row < n; row++)
     {
-        for(col = 0; col < N; col++)
+        for(col = 0; col < n; col++)
         {
-            M(a, row, col) = row * N + col;
-            M(b, col, row) = row * N + col;
+            M(a, row, col) = row * n + col;
+            M(b, col, row) = row * n + col;
         }
     }
+
+    //print_matrix(a);
+    //print_matrix(b);
 
     d_a.cols = a.cols;
     d_a.rows = a.rows;
@@ -97,9 +91,7 @@ int main(void)
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); 
     dim3 dimGrid(c.cols / dimBlock.x, c.rows / dimBlock.y);
 
-    const char *cache_config_str;
-    set_cache_config(CUDA_CACHE_CONFIG, &cache_config_str);
-    
+        
     TIME_GET(start);
     MULT_KERNEL<<<dimGrid, dimBlock>>>(d_a, d_b, d_c);
     cudaDeviceSynchronize();
@@ -110,6 +102,8 @@ int main(void)
     CUDA_ERROR_CHECK(cudaPeekAtLastError());
 
     cudaMemcpy(c.elements, d_c.elements, SIZE(d_c), cudaMemcpyDeviceToHost);
+
+    //print_matrix(c);
 
     mat_mult(a ,b ,c_host);
     // validate c (kernel result matrix) with c_host matrix
@@ -127,7 +121,7 @@ int main(void)
 
     if (valid_result)
     {
-        printf("{ \"valid\": true, \"N\": %d, \"kernel_time\": %.9f, \"cache_config\": \"%s\", \"kernel\": \"%s\"}\n", N, kernel_time, cache_config_str, STR(MULT_KERNEL));
+        printf("{ \"valid\": true, \"n\": %d, \"kernel_time\": %.9f, \"cache_config\": \"%s\", \"kernel\": \"%s\"}\n", n, kernel_time, cache_config_str, STR(MULT_KERNEL));
         return EXIT_SUCCESS;
     }
     else
@@ -137,9 +131,21 @@ int main(void)
     }
 }
 
-
-void set_cache_config(int cache_config, const char ** cache_config_str)
+void mat_mult_init(int argc, char** argv, int *n, int *cache_config, const char ** cache_config_str)
 {
+	assert(argc == 3);
+
+	*n = atoi(argv[1]);
+	*cache_config = atoi(argv[2]);
+
+	assert((*n > 0) && (*n % BLOCK_SIZE == 0));
+        assert(set_cache_config(*cache_config, cache_config_str));
+}
+
+bool set_cache_config(int cache_config, const char ** cache_config_str)
+{
+    bool success = true;
+    
     switch(cache_config)
     {
         case cudaFuncCachePreferNone:
@@ -160,10 +166,11 @@ void set_cache_config(int cache_config, const char ** cache_config_str)
             break;
         default :
             *cache_config_str = "undefined";
+            success = false;
     }
 
+    return success;
 }
-
 
 bool matrix_equal(const Matrix a, const Matrix b)
 {
@@ -189,7 +196,6 @@ bool matrix_equal(const Matrix a, const Matrix b)
     return true;
 }
 
-
 void mat_mult(const Matrix a, const Matrix b, const Matrix c)
 {
     int row;
@@ -209,7 +215,6 @@ void mat_mult(const Matrix a, const Matrix b, const Matrix c)
     }
 }
 
-
 __global__ void mat_mult_kernel(const Matrix a, const Matrix b, const Matrix c) 
 {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -223,7 +228,6 @@ __global__ void mat_mult_kernel(const Matrix a, const Matrix b, const Matrix c)
     }
     M(c, row, col) = sum; 
 }
-
 
 __global__ void mat_mult_tiling_kernel(const Matrix a, const Matrix b, const Matrix c)
 {
@@ -260,7 +264,6 @@ __global__ void mat_mult_tiling_kernel(const Matrix a, const Matrix b, const Mat
 
     M(c, row, col) = cval;
 }
-
 
 void print_matrix(const Matrix m)
 {

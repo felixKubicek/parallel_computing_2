@@ -19,12 +19,6 @@
     #define BLOCK_SIZE_Y 4
 #endif
 
-#define CUDA_ERROR_CHECK(x)\
-    do {cudaError_t last_err = (x);\
-        if (last_err != cudaSuccess)\
-                {fprintf(stderr ,"%s:%u: CUDA error: %s\n", __FILE__, __LINE__, cudaGetErrorString ( last_err )); exit(EXIT_FAILURE); }\
-    } while (false)
-
 /* --------------------- CA simulation -------------------------------- */
 
 /* annealing rule from ChoDro96 page 34

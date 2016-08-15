@@ -1,10 +1,31 @@
-CC=/usr/local/apps/cuda/7.5/bin/nvcc
-XCFLAGS= # emable tiling with -DTILING
-TARGET=mat_mult
-N=64
-CUDA_CACHE_CONFIG=0 # == cudaFuncCachePreferNone
+SHELL=/bin/bash
+CUDA_CC=/usr/local/apps/cuda/7.5/bin/nvcc
 
-$(TARGET): $(TARGET).cu
-	$(CC) -o $@  $< $(XCFLAGS) -DN=$(N) -DCUDA_CACHE_CONFIG=$(CUDA_CACHE_CONFIG)
+TARGETS=mat_mult mat_mult_tiling
+
+.PHONY: all
+all: $(TARGETS)
+
+mat_mult: mat_mult.cu
+	$(CUDA_CC) -o $@  $< 
+
+mat_mult_tiling: mat_mult.cu
+	$(CUDA_CC) -o $@  $< -DTILING 
+
+.PHONY: bench
+PASSES=1
+bench: $(TARGETS)
+	@for N in 3200; do \
+		for CACHE_CONFIG in 1; do \
+			for BINARY in $^; do \
+				for i in {1..${PASSES}}; do \
+					./$$BINARY $$N $$CACHE_CONFIG; \
+				done; \
+			done; \
+		done; \
+	done;
+
+.PHONY: clean
 clean:
-	rm $(TARGET)
+	rm -f *.o
+	rm -f $(TARGETS)
