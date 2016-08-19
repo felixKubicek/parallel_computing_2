@@ -57,6 +57,7 @@ void ca_init(int argc, char** argv, int *lines, int *its);
 void ca_init_config(line_t *buf, int lines, int skip_lines);
 void ca_init_config_cuda(line_t_cuda *buf, int lines, int skip_lines);
 void ca_hash_and_report(line_t *buf, int lines, double time_in_s);
+char* ca_buffer_to_hex_str(const uint8_t* buf, size_t buf_size);
 void print_field(line_t *field, int lines);
 void print_field_cuda(line_t_cuda *field, int lines);
 

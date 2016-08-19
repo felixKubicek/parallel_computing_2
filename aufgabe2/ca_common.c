@@ -99,7 +99,7 @@ void ca_init_config_cuda(line_t_cuda *buf, int lines, int skip_lines)
 	}
 }
 
-static char* ca_buffer_to_hex_str(const uint8_t* buf, size_t buf_size)
+char* ca_buffer_to_hex_str(const uint8_t* buf, size_t buf_size)
 {
   char *retval, *ptr;
 

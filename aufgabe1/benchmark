@@ -10,9 +10,13 @@ if len(sys.argv) > 1:
     filename = sys.argv[1] + '.txt'
 
 FLOAT_FORM = "{:.3f}"
-PASSES = 3
+PASSES = 2
+VALIDATE = False
+VALIDATE_DEF = "-DVALIDATE" if VALIDATE else ""
 
-subprocess.call(["make"])
+subprocess.call(["make", "clean"])
+subprocess.call(["make", "VALIDATE_DEF={}".format(VALIDATE_DEF)])
+
 bench_results = subprocess.check_output(["make", "bench", "PASSES={}".format(PASSES)])
 bench_results = bench_results.splitlines()
 output = []
@@ -29,16 +33,25 @@ while line_num < len(bench_results):
     # validate output (same matrix dimension and cache config for each pass)
     passes_assert = map(lambda p: [p['kernel'], p['cache_config'], p['n']], passes_output)
     assert(all(p == passes_assert[0] for p in passes_assert))
-    # every run must be valid
-    assert(all(p["valid"] == True for p in passes_output))
 
-    output.append("./{} {} {}\t times={} mean={} std_deviation={}".format(
+    hash_info = ""
+    if VALIDATE:
+        # every run must be valid
+        assert(all(p["valid"] == True for p in passes_output))
+    else:
+        # same hash for every pass
+        assert(all(p['hash'] == passes_output[0]['hash'] for p in passes_output))
+        hash_info = "hash={}".format(passes_output[0]['hash'])
+
+    output.append("./{:25} {} {:20} times={} mean={} std_deviation={} {}".format(
                             passes_output[0]['kernel'], 
                             passes_output[0]['n'], 
                             passes_output[0]['cache_config'],
                             [FLOAT_FORM.format(t) for t in passes_times],
                             FLOAT_FORM.format(numpy.mean(passes_times)),
-                            FLOAT_FORM.format(numpy.std(passes_times))))
+                            FLOAT_FORM.format(numpy.std(passes_times)),
+                            hash_info))
+
     line_num += PASSES
 
 output_str = '\n'.join(output)

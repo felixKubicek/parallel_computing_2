@@ -3,6 +3,7 @@
 #include <stdlib.h> 
 #include <stdbool.h>
 #include <assert.h>
+#include "openssl/md5.h"
 #include "../aufgabe2/ca_common.h"
 
 #define BLOCK_SIZE 32
@@ -54,11 +55,6 @@ int main(int argc, char** argv)
     MALLOC_ERROR_CHECK(b.elements = (m_cell*) malloc(SIZE(b)));
     MALLOC_ERROR_CHECK(c.elements = (m_cell*) malloc(SIZE(c)));
 
-    // c_host matrix calculated locally (compared with c matrix for validation) 
-    Matrix c_host;
-    c_host.rows = c.rows;
-    c_host.cols = c.cols;
-    MALLOC_ERROR_CHECK(c_host.elements = (m_cell*) malloc(SIZE(c_host)));
 
     int row;
     int col;
@@ -103,17 +99,34 @@ int main(int argc, char** argv)
 
     cudaMemcpy(c.elements, d_c.elements, SIZE(d_c), cudaMemcpyDeviceToHost);
 
-    //print_matrix(c);
+    
+#ifdef VALIDATE
+    Matrix c_host;
+    c_host.rows = c.rows;
+    c_host.cols = c.cols;
+    MALLOC_ERROR_CHECK(c_host.elements = (m_cell*) malloc(SIZE(c_host)));
 
     mat_mult(a ,b ,c_host);
     // validate c (kernel result matrix) with c_host matrix
     bool valid_result = matrix_equal(c, c_host);
-  
+#else
+    bool valid_result = true;
+
+    uint8_t hash[MD5_DIGEST_LENGTH];
+    MD5_CTX ctx;
+    MD5_Init(&ctx);
+    MD5_Update(&ctx, c.elements, SIZE(c));
+    MD5_Final(hash, &ctx);
+    char* hash_str = ca_buffer_to_hex_str(hash, MD5_DIGEST_LENGTH);
+#endif
+
     // free memory
     free(a.elements);
     free(b.elements);
     free(c.elements);
+#ifdef VALIDATE
     free(c_host.elements);
+#endif
 
     cudaFree(d_a.elements);
     cudaFree(d_b.elements);
@@ -121,7 +134,12 @@ int main(int argc, char** argv)
 
     if (valid_result)
     {
+#ifdef VALIDATE
         printf("{ \"valid\": true, \"n\": %d, \"kernel_time\": %.9f, \"cache_config\": \"%s\", \"kernel\": \"%s\"}\n", n, kernel_time, cache_config_str, STR(MULT_KERNEL));
+#else 
+        printf("{ \"n\": %d, \"kernel_time\": %.9f, \"cache_config\": \"%s\", \"kernel\": \"%s\", \"hash\": \"%s\"}\n", n, kernel_time, cache_config_str, STR(MULT_KERNEL), hash_str);
+        free(hash_str);
+#endif
         return EXIT_SUCCESS;
     }
     else
