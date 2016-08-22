@@ -4,28 +4,17 @@
 #include <stdbool.h>
 #include <assert.h>
 #include "openssl/md5.h"
+#include "mat_mult.h"
 #include "../aufgabe2/ca_common.h"
 
 #define BLOCK_SIZE 32
 #define TILE_WIDTH BLOCK_SIZE
-
-#define M(m, row, col) m.elements[(row) * m.cols + (col)]
-#define SIZE(m) m.cols * m.rows * sizeof(m_cell)
 
 #ifdef TILING
 #define MULT_KERNEL mat_mult_tiling_kernel
 #else
 #define MULT_KERNEL mat_mult_kernel
 #endif
-
-#define m_cell_fms "%d"
-typedef int m_cell;
-
-typedef struct { 
-    int rows;
-    int cols; 
-    m_cell* elements;
-} Matrix;
 
 bool matrix_equal(const Matrix a, const Matrix b);
 void mat_mult(const Matrix, const Matrix, const Matrix);
@@ -66,9 +55,6 @@ int main(int argc, char** argv)
             M(b, col, row) = row * n + col;
         }
     }
-
-    //print_matrix(a);
-    //print_matrix(b);
 
     d_a.cols = a.cols;
     d_a.rows = a.rows;
