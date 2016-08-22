@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     free(b.elements);
     free(c.elements);
 
-    printf("{ \"valid\": true, \"n\": %d, \"kernel_time\": %.9f, \"cache_config\": \"none\", \"kernel\": \"mat_mult_seq\", \"hash\": \"%s\"}\n", n, seq_time, hash_str);
+    printf("{ \"valid\": true, \"n\": %d, \"kernel_time\": %.9f, \"cache_config\": \"none\", \"kernel\": \"mat_mult_seq\", \"hash\": \"%s\" size_int: %d}\n", n, seq_time, hash_str, sizeof(int));
     free(hash_str);
     
     return EXIT_SUCCESS;

@@ -14,10 +14,10 @@ PASSES = 2
 VALIDATE = False
 VALIDATE_DEF = "-DVALIDATE" if VALIDATE else ""
 
-subprocess.call(["make", "clean"])
+# subprocess.call(["make", "clean"])
 subprocess.call(["make", "VALIDATE_DEF={}".format(VALIDATE_DEF)])
 
-bench_results = subprocess.check_output(["make", "bench", "PASSES={}".format(PASSES)])
+bench_results = subprocess.check_output(["make", "bench_cuda", "PASSES={}".format(PASSES)])
 bench_results = bench_results.splitlines()
 output = []
 

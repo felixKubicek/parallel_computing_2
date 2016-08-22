@@ -27,7 +27,7 @@ mat_mult_seq: mat_mult_seq.c $(C_DEPS)
 
 .PHONY: bench
 PASSES=1
-DIMS=32 64
+DIMS=1024 5120 10240 15360 20480 25600 31584 # 31.584^2 per matrix is the absolute maximum
 
 bench: bench_cuda bench_seq
 bench_cuda: $(CUDA_TARGETS)
