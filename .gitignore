@@ -1,2 +1,11 @@
 *.swp
+*.txt
+*.o
 mat_mult
+mat_mult_seq
+mat_mult_tiling
+ca_opencl
+ca_openacc
+ca_cuda_1d
+ca_cuda_2d
+ca_seq
