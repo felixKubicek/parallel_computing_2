@@ -17,6 +17,8 @@
 #ifdef USE_2D_MAPPING  
     #define BLOCK_SIZE_X 32
     #define BLOCK_SIZE_Y 4
+#else 
+    #define BLOCK_SIZE 128
 #endif
 
 /* --------------------- CA simulation -------------------------------- */
@@ -84,6 +86,18 @@ int main(int argc, char** argv)
         CUDA_ERROR_CHECK(cudaMemcpy((void *) from_d, (void *) from, lines * sizeof(line_t_cuda), cudaMemcpyHostToDevice));
         CUDA_ERROR_CHECK(cudaMemcpy((void *) to_d, (void *) to, lines * sizeof(line_t_cuda), cudaMemcpyHostToDevice));
 
+/*        
+        int numBlocks;
+        int blockSize;
+#ifdef USE_2D_MAPPING 
+        blockSize = BLOCK_SIZE_X * BLOCK_SIZE_Y;
+#else
+        blockSize = BLOCK_SIZE;
+#endif      
+        cudaOccupancyMaxActiveBlocksPerMultiprocessor(&numBlocks, simulate, blockSize, 0);
+        printf("Occupancy: %d\n", numBlocks);
+*/        
+
 #ifdef USE_2D_MAPPING  
         dim3 dimBlock(BLOCK_SIZE_X, BLOCK_SIZE_Y);
         dim3 dimGrid(XSIZE/dimBlock.x, lines/dimBlock.y);
@@ -94,7 +108,7 @@ int main(int argc, char** argv)
 #ifdef USE_2D_MAPPING  
 		simulate <<<dimGrid, dimBlock>>> (from_d, to_d, lines);
 #else
-                simulate <<<lines, XSIZE/4>>> (from_d, to_d, lines);
+                simulate <<<lines, BLOCK_SIZE>>> (from_d, to_d, lines);
 #endif
                 line_t_cuda *temp = from_d;
 		from_d = to_d;
