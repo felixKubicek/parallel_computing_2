@@ -32,7 +32,7 @@ DIMS=1024 5120 10240 15360 20480 25600 31584 # 31.584^2 per matrix is the absolu
 bench: bench_cuda bench_seq
 bench_cuda: $(CUDA_TARGETS)
 	@for N in ${DIMS}; do \
-		for CACHE_CONFIG in 1; do \
+		for CACHE_CONFIG in 1 2 3; do \
 			for BINARY in $^; do \
 				for i in {1..${PASSES}}; do \
 					./$$BINARY $$N $$CACHE_CONFIG; \

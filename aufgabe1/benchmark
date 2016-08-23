@@ -10,11 +10,11 @@ if len(sys.argv) > 1:
     filename = sys.argv[1] + '.txt'
 
 FLOAT_FORM = "{:.3f}"
-PASSES = 2
+PASSES = 3
 VALIDATE = False
 VALIDATE_DEF = "-DVALIDATE" if VALIDATE else ""
 
-# subprocess.call(["make", "clean"])
+subprocess.call(["make", "clean"])
 subprocess.call(["make", "VALIDATE_DEF={}".format(VALIDATE_DEF)])
 
 bench_results = subprocess.check_output(["make", "bench_cuda", "PASSES={}".format(PASSES)])

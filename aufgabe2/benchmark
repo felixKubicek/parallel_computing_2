@@ -10,6 +10,7 @@ if len(sys.argv) > 1:
 
 PASSES = 3
 
+subprocess.call(["make", "clean"])
 subprocess.call(["make"])
 bench_results = subprocess.check_output(["make", "bench", "PASSES={}".format(PASSES)])
 bench_results = bench_results.splitlines()
