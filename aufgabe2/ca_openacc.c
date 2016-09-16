@@ -27,7 +27,7 @@ static const cell_state_t anneal[10] = {0, 0, 0, 0, 1, 0, 1, 1, 1, 1};
  */
 void simulate(line_t_cuda *from, line_t_cuda *to, int lines)
 {
-        #pragma acc parallel num_gangs(lines/32) num_workers(32) vector_length(32)
+        #pragma acc parallel vector_length(32)
         {
                 #pragma acc loop gang
                 for (int y = 0; y < lines; y++) {
