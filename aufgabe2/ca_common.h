@@ -48,14 +48,19 @@ extern "C" {
 #define XSIZE 1024
 #define LINE_SIZE (XSIZE + 2)
 
+#define get_bit(field, x, y) (field[y][x/(sizeof(cell_state_t)*8)] >> (x % (sizeof(cell_state_t) * 8))) & 1
+#define set_bit(field, x, y) field[y][x/(sizeof(cell_state_t)*8)] |= (1 << (x % (sizeof(cell_state_t) * 8))) 
+
 /* "ADT" State and line of states (plus border) */
 typedef uint8_t cell_state_t;
 typedef cell_state_t line_t[XSIZE + 2];
 typedef cell_state_t line_t_cuda[XSIZE];
+typedef cell_state_t line_t_bit[XSIZE/8];
 
 void ca_init(int argc, char** argv, int *lines, int *its);
 void ca_init_config(line_t *buf, int lines, int skip_lines);
 void ca_init_config_cuda(line_t_cuda *buf, int lines, int skip_lines);
+void ca_init_config_bit(line_t_bit *buf, int lines, int skip_lines);
 void ca_hash_and_report(line_t *buf, int lines, double time_in_s);
 char* ca_buffer_to_hex_str(const uint8_t* buf, size_t buf_size);
 void print_field(line_t *field, int lines);

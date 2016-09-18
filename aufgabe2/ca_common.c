@@ -99,6 +99,27 @@ void ca_init_config_cuda(line_t_cuda *buf, int lines, int skip_lines)
 	}
 }
 
+/* random starting configuration for cuda with bitmap (without ghostzones) */
+void ca_init_config_bit(line_t_bit *buf, int lines, int skip_lines)
+{
+	volatile int scratch;
+
+	initRandomLEcuyer(424243);
+
+	/* let the RNG spin for some rounds (used for distributed initialization) */
+	for (int y = 0;  y < skip_lines;  y++) {
+		for (int x = 0;  x < XSIZE;  x++) {
+			scratch = scratch + randInt(100) >= 50;
+		}
+	}
+
+	for (int y = 0;  y < lines;  y++) {
+		for (int x = 0;  x < XSIZE;  x++) {
+			  if randInt(100 >= 50) set_bit(buf, x, y);
+		}
+	}
+}
+
 char* ca_buffer_to_hex_str(const uint8_t* buf, size_t buf_size)
 {
   char *retval, *ptr;

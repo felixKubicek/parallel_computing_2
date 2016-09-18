@@ -20,7 +20,7 @@ C_DEPS=ca_common.c random.c
 
 MPI_TARGETS=ca_mpi_p2p ca_mpi_p2p_nb ca_mpi_osc
 
-TARGETS=ca_seq ca_cuda_1d ca_cuda_2d ca_opencl ca_openacc 
+TARGETS=ca_cuda_2d #ca_seq ca_cuda_1d  ca_opencl ca_openacc 
 
 .PHONY: all
 all: $(TARGETS)
@@ -43,6 +43,9 @@ ca_cuda_1d: ca_cuda.cu $(C_DEPS)
 
 ca_cuda_2d: ca_cuda.cu $(C_DEPS)
 	$(CUDA_CC) $(COMMON_CFLAGS) $(CUDA_CFLAGS) -DUSE_2D_MAPPING $^ $(COMMON_LDFLAGS) -o $@
+
+ca_cuda_bit: ca_cuda_bit.cu $(C_DEPS)
+	$(CUDA_CC) $(COMMON_CFLAGS) $(CUDA_CFLAGS) $^ $(COMMON_LDFLAGS) -o $@
 
 ca_opencl: ca_opencl.c $(C_DEPS)
 	$(CUDA_CC) $(COMMON_CFLAGS) $(CUDA_CFLAGS) $(CL_CFLAGS) $^ $(COMMON_LDFLAGS) -o $@ 

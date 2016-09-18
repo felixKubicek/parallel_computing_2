@@ -9,3 +9,4 @@ ca_openacc
 ca_cuda_1d
 ca_cuda_2d
 ca_seq
+ca_cuda_bit
