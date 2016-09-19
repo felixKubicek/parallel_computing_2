@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 	TIME_GET(sim_start);
 	for (int i = 0; i < its; i++) 
         {
-                simulate <<<lines, XSIZE/8>>> (from_d, to_d, lines);
+                simulate <<<lines/10, XSIZE/8>>> (from_d, to_d, lines);
 
                 line_t_bit *temp = from_d;
 		from_d = to_d;

@@ -20,7 +20,7 @@ C_DEPS=ca_common.c random.c
 
 MPI_TARGETS=ca_mpi_p2p ca_mpi_p2p_nb ca_mpi_osc
 
-TARGETS=ca_cuda_bit #ca_cuda_2d ca_seq ca_cuda_1d ca_opencl ca_openacc ca_seq ca_cuda_2d ca_cuda_1d
+TARGETS=ca_cuda_1d ca_cuda_2d ca_opencl ca_openacc ca_cuda_bit #ca_seq 
 
 .PHONY: all
 all: $(TARGETS)
