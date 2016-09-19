@@ -55,7 +55,9 @@ extern "C" {
 typedef uint8_t cell_state_t;
 typedef cell_state_t line_t[XSIZE + 2];
 typedef cell_state_t line_t_cuda[XSIZE];
-typedef cell_state_t line_t_bit[XSIZE/8];
+
+typedef uint8_t bitmap_cell_type;
+typedef bitmap_cell_type line_t_bit[XSIZE/(sizeof(bitmap_cell_type)*8)];
 
 void ca_init(int argc, char** argv, int *lines, int *its);
 void ca_init_config(line_t *buf, int lines, int skip_lines);

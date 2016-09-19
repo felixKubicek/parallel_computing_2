@@ -14,13 +14,15 @@
 #include <stdlib.h>
 #include "ca_common.h"
 
+#define ANNEAL(i) ((0x3D0 >> (i)) & 1)
+
 /* --------------------- CA simulation -------------------------------- */
 
 /* annealing rule from ChoDro96 page 34
  * the table is used to map the number of nonzero
  * states in the neighborhood to the new state
+ * __constant__ static const cell_state_t anneal[10] = {0, 0, 0, 0, 1, 0, 1, 1, 1, 1};
  */
-__constant__ static const cell_state_t anneal[10] = {0, 0, 0, 0, 1, 0, 1, 1, 1, 1};
 
 /* make one simulation iteration with lines lines.
  * old configuration is in from, new one is written to to.
@@ -66,7 +68,7 @@ __global__ static void simulate(line_t_bit *from, line_t_bit *to, int lines)
                 num_bits = (num_bits & 0x0f0f) + ((num_bits >> 4) & 0x0f0f);
                 num_bits = (num_bits & 0x00ff) + ((num_bits >> 8) & 0x00ff);
 
-                result |= (anneal[num_bits] << b);
+                result |= ANNEAL(num_bits) << b;
                 mask = mask << 1;
             }
 
@@ -97,7 +99,7 @@ int main(int argc, char** argv)
 
         CUDA_ERROR_CHECK(cudaMemcpy((void *) from_d, (void *) from, lines * sizeof(line_t_bit), cudaMemcpyHostToDevice));
         CUDA_ERROR_CHECK(cudaMemcpy((void *) to_d, (void *) to, lines * sizeof(line_t_bit), cudaMemcpyHostToDevice));
-
+        
 	TIME_GET(sim_start);
 	for (int i = 0; i < its; i++) 
         {
