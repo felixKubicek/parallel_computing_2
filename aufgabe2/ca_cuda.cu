@@ -2,6 +2,7 @@
  * simulate a cellular automaton with periodic boundaries (torus-like)
  * serial version
  *
+ * (c) 2016 Felix Kubicek (Cuda port)
  * (c) 2016 Steffen Christgau (C99 port, modularization)
  * (c) 1996,1997 Peter Sanders, Ingo Boesnach (original source)
  *

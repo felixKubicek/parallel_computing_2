@@ -1,3 +1,11 @@
+/*
+ * 2016 Felix Kubicek
+ *
+ * Matrix multiplication with and without tiling.
+ * Both versions are taken from the cuda programming guide (http://docs.nvidia.com/cuda/cuda-c-programming-guide/#shared-memory).
+ *
+ */
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h> 

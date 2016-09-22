@@ -2,6 +2,7 @@
  * simulate a cellular automaton with periodic boundaries (torus-like)
  * serial version
  *
+ * (c) 2016 Felix Kubicek (Cuda port, optimization, e.g.: state field as bitmap)
  * (c) 2016 Steffen Christgau (C99 port, modularization)
  * (c) 1996,1997 Peter Sanders, Ingo Boesnach (original source)
  *
@@ -58,11 +59,13 @@ __global__ static void simulate(line_t_bit *from, line_t_bit *to, int lines)
             int bottom =  (bottom_r << 9) + (from[y_next][x] << 1) + bottom_l;
 
             cell_state_t result = 0;
+            // 0x111 mask used to get all bits of top/middle/bottom row (3 bits each)
             int mask = 7;
 
             for(int b = 0; b < 8; b++)
             {
                 int num_bits = ((top & mask) << 6) + ((middle & mask) << 3) + (bottom & mask);
+                // bit counting algorithm (see: https://en.wikipedia.org/wiki/Hamming_weight)
                 num_bits = (num_bits & 0x5555) + ((num_bits >> 1) & 0x5555);
                 num_bits = (num_bits & 0x3333) + ((num_bits >> 2) & 0x3333);
                 num_bits = (num_bits & 0x0f0f) + ((num_bits >> 4) & 0x0f0f);
