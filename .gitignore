@@ -1,5 +1,4 @@
 *.swp
-*.txt
 *.o
 mat_mult
 mat_mult_seq

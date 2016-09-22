@@ -1,0 +1,45 @@
+lines: 1000, iterations: 1000
+ca_cuda_bit	hash: 9EE61394AD127E50AD99EA528F0C3C41	time: 0.044 s
+ca_cuda_bit	hash: 9EE61394AD127E50AD99EA528F0C3C41	time: 0.044 s
+ca_cuda_bit	hash: 9EE61394AD127E50AD99EA528F0C3C41	time: 0.044 s
+average: 0.044; standard_deviation: 6.93889390391e-18
+lines: 10000, iterations: 1000
+ca_cuda_bit	hash: D8064CC9037EB8257EB6CF5257E32CA1	time: 0.308 s
+ca_cuda_bit	hash: D8064CC9037EB8257EB6CF5257E32CA1	time: 0.307 s
+ca_cuda_bit	hash: D8064CC9037EB8257EB6CF5257E32CA1	time: 0.307 s
+average: 0.307333333333; standard_deviation: 0.000471404520791
+lines: 100000, iterations: 1000
+ca_cuda_bit	hash: D3E6DF29600084D89A48A840B424C537	time: 2.925 s
+ca_cuda_bit	hash: D3E6DF29600084D89A48A840B424C537	time: 2.925 s
+ca_cuda_bit	hash: D3E6DF29600084D89A48A840B424C537	time: 2.925 s
+average: 2.925; standard_deviation: 4.4408920985e-16
+lines: 1000, iterations: 2000
+ca_cuda_bit	hash: 41ED261D37AF46807E9D437C6F56ECC8	time: 0.087 s
+ca_cuda_bit	hash: 41ED261D37AF46807E9D437C6F56ECC8	time: 0.087 s
+ca_cuda_bit	hash: 41ED261D37AF46807E9D437C6F56ECC8	time: 0.087 s
+average: 0.087; standard_deviation: 1.38777878078e-17
+lines: 10000, iterations: 2000
+ca_cuda_bit	hash: 7D8AD38F6229A62F132A5091B31135D4	time: 0.615 s
+ca_cuda_bit	hash: 7D8AD38F6229A62F132A5091B31135D4	time: 0.615 s
+ca_cuda_bit	hash: 7D8AD38F6229A62F132A5091B31135D4	time: 0.615 s
+average: 0.615; standard_deviation: 0.0
+lines: 100000, iterations: 2000
+ca_cuda_bit	hash: B7093B0C5B04598FE5A9D5FFE64AB071	time: 5.850 s
+ca_cuda_bit	hash: B7093B0C5B04598FE5A9D5FFE64AB071	time: 5.854 s
+ca_cuda_bit	hash: B7093B0C5B04598FE5A9D5FFE64AB071	time: 5.854 s
+average: 5.85266666667; standard_deviation: 0.00188561808316
+lines: 1000, iterations: 3000
+ca_cuda_bit	hash: C0538AF7637DF89965ED2304264D9D1F	time: 0.130 s
+ca_cuda_bit	hash: C0538AF7637DF89965ED2304264D9D1F	time: 0.130 s
+ca_cuda_bit	hash: C0538AF7637DF89965ED2304264D9D1F	time: 0.130 s
+average: 0.13; standard_deviation: 0.0
+lines: 10000, iterations: 3000
+ca_cuda_bit	hash: 4635AA6F01A89896348C77157BC92F85	time: 0.923 s
+ca_cuda_bit	hash: 4635AA6F01A89896348C77157BC92F85	time: 0.923 s
+ca_cuda_bit	hash: 4635AA6F01A89896348C77157BC92F85	time: 0.923 s
+average: 0.923; standard_deviation: 0.0
+lines: 100000, iterations: 3000
+ca_cuda_bit	hash: 8A2948B62141674D82040080CF3B3C62	time: 8.777 s
+ca_cuda_bit	hash: 8A2948B62141674D82040080CF3B3C62	time: 8.779 s
+ca_cuda_bit	hash: 8A2948B62141674D82040080CF3B3C62	time: 8.781 s
+average: 8.779; standard_deviation: 0.00163299316186

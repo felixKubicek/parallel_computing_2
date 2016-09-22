@@ -1,0 +1,45 @@
+lines: 1000, iterations: 1000
+ca_openacc	hash: 9EE61394AD127E50AD99EA528F0C3C41	time: 2.475 s
+ca_openacc	hash: 9EE61394AD127E50AD99EA528F0C3C41	time: 2.473 s
+ca_openacc	hash: 9EE61394AD127E50AD99EA528F0C3C41	time: 2.476 s
+average: 2.47466666667; standard_deviation: 0.00124721912892
+lines: 10000, iterations: 1000
+ca_openacc	hash: D8064CC9037EB8257EB6CF5257E32CA1	time: 3.342 s
+ca_openacc	hash: D8064CC9037EB8257EB6CF5257E32CA1	time: 3.310 s
+ca_openacc	hash: D8064CC9037EB8257EB6CF5257E32CA1	time: 3.338 s
+average: 3.33; standard_deviation: 0.014236104336
+lines: 100000, iterations: 1000
+ca_openacc	hash: D3E6DF29600084D89A48A840B424C537	time: 12.263 s
+ca_openacc	hash: D3E6DF29600084D89A48A840B424C537	time: 12.238 s
+ca_openacc	hash: D3E6DF29600084D89A48A840B424C537	time: 12.250 s
+average: 12.2503333333; standard_deviation: 0.0102089285541
+lines: 1000, iterations: 2000
+ca_openacc	hash: 41ED261D37AF46807E9D437C6F56ECC8	time: 2.586 s
+ca_openacc	hash: 41ED261D37AF46807E9D437C6F56ECC8	time: 2.589 s
+ca_openacc	hash: 41ED261D37AF46807E9D437C6F56ECC8	time: 2.589 s
+average: 2.588; standard_deviation: 0.00141421356237
+lines: 10000, iterations: 2000
+ca_openacc	hash: 7D8AD38F6229A62F132A5091B31135D4	time: 4.296 s
+ca_openacc	hash: 7D8AD38F6229A62F132A5091B31135D4	time: 4.307 s
+ca_openacc	hash: 7D8AD38F6229A62F132A5091B31135D4	time: 4.319 s
+average: 4.30733333333; standard_deviation: 0.00939266853574
+lines: 100000, iterations: 2000
+ca_openacc	hash: B7093B0C5B04598FE5A9D5FFE64AB071	time: 22.095 s
+ca_openacc	hash: B7093B0C5B04598FE5A9D5FFE64AB071	time: 22.103 s
+ca_openacc	hash: B7093B0C5B04598FE5A9D5FFE64AB071	time: 22.111 s
+average: 22.103; standard_deviation: 0.00653197264742
+lines: 1000, iterations: 3000
+ca_openacc	hash: C0538AF7637DF89965ED2304264D9D1F	time: 2.689 s
+ca_openacc	hash: C0538AF7637DF89965ED2304264D9D1F	time: 2.682 s
+ca_openacc	hash: C0538AF7637DF89965ED2304264D9D1F	time: 2.904 s
+average: 2.75833333333; standard_deviation: 0.103041523453
+lines: 10000, iterations: 3000
+ca_openacc	hash: 4635AA6F01A89896348C77157BC92F85	time: 5.291 s
+ca_openacc	hash: 4635AA6F01A89896348C77157BC92F85	time: 5.278 s
+ca_openacc	hash: 4635AA6F01A89896348C77157BC92F85	time: 5.291 s
+average: 5.28666666667; standard_deviation: 0.00612825877028
+lines: 100000, iterations: 3000
+ca_openacc	hash: 8A2948B62141674D82040080CF3B3C62	time: 31.952 s
+ca_openacc	hash: 8A2948B62141674D82040080CF3B3C62	time: 31.889 s
+ca_openacc	hash: 8A2948B62141674D82040080CF3B3C62	time: 31.927 s
+average: 31.9226666667; standard_deviation: 0.0259015229068
