@@ -13,6 +13,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "ca_common.h"
 
 #ifdef USE_2D_MAPPING  
@@ -99,7 +100,10 @@ int main(int argc, char** argv)
         printf("Occupancy: %d\n", numBlocks);
 */        
 
-#ifdef USE_2D_MAPPING  
+#ifdef USE_2D_MAPPING
+        //assert cuda  mapping fits (otherwise wrong hash)
+        assert((XSIZE % BLOCK_SIZE_X) == 0);
+        assert((lines % BLOCK_SIZE_Y) == 0);
         dim3 dimBlock(BLOCK_SIZE_X, BLOCK_SIZE_Y);
         dim3 dimGrid(XSIZE/dimBlock.x, lines/dimBlock.y);
 #endif
